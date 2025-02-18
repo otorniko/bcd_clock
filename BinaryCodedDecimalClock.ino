@@ -1,9 +1,9 @@
-byte binaryClock[8] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-int myMatrix[8][8] = { 0 };
+byte binaryClock[8] = { 0 };
+int timeMatrix[8][8] = { 0 };
 
-int hours = 0;
-int minutes = 0;
-int seconds = 0;
+int hours = 13;
+int minutes = 36;
+int seconds = 45;
 
 void setup() {
   for (int i = 2; i < 18; i++) {
@@ -12,12 +12,12 @@ void setup() {
   clear_();
 }
 
-void clear_(void) {  
+void clear_(void) {
   for (int i = 2; i < 10; i++) {
-    digitalWrite(i, LOW);  
+    digitalWrite(i, LOW);
   }
   for (int i = 0; i < 8; i++) {
-    digitalWrite(i + 10, HIGH);  
+    digitalWrite(i + 10, HIGH);
   }
 }
 
@@ -28,12 +28,10 @@ void loop() {
 
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
-    
     updateClock();
-    updateTimeMatrix();
     matrixToByteArray();
-    refreshLEDMatrix(); 
   }
+  refreshLEDs();
 }
 
 void updateClock() {
@@ -51,33 +49,31 @@ void updateClock() {
   }
 }
 
-void updateTimeMatrix() {
-  intToBCDMatrix(hours, 0);
-  intToBCDMatrix(minutes, 3);
-  intToBCDMatrix(seconds, 6);
-}
-
-void intToBCDMatrix(int num, int col) {
-  int tens = num / 10;
-  int ones = num % 10;
-  // Convert tens and ones to 4-bit binary (BCD)
-  for (int i = 3; i >= 0; i--) {
-    myMatrix[i + 4][col] = (tens >> i) & 1;      // Extract each bit of 'tens'
-    myMatrix[i + 4][col + 1] = (ones >> i) & 1;  // Extract each bit of 'ones'
-  }
-}
-
 void matrixToByteArray() {
+  timeToMatrix(seconds, 0);
+  timeToMatrix(minutes, 3);
+  timeToMatrix(hours, 6);
+
   for (int i = 0; i < 8; i++) {
+    binaryClock[i] = 0;
     for (int j = 0; j < 8; j++) {
-      if ((bool)myMatrix[i][j]) {          // If the element is 1 (true)
-        binaryClock[i] |= (1 << (7 - j));  // Set the corresponding bit
+      if ((bool)timeMatrix[i][j]) {
+        binaryClock[i] |= (1 << j);
       }
     }
   }
 }
 
-void refreshLEDMatrix() {
+void timeToMatrix(int num, int col) {
+  int tens = num / 10;
+  int ones = num % 10;
+  for (int i = 0; i < 4; i++) { 
+    timeMatrix[3 - i][col + 1] = (tens >> i) & 1;
+    timeMatrix[3 - i][col] = (ones >> i) & 1;
+  }
+}
+
+void refreshLEDs() {
   for (int row = 0; row < 8; ++row) {
     for (int col = 0; col < 8; ++col) {
       if ((binaryClock[row] >> col) & 1) {
@@ -85,11 +81,11 @@ void refreshLEDMatrix() {
       }
     }
   }
-}
+} 
 
 void Draw_point(unsigned char x, unsigned char y) {
   clear_();
   digitalWrite(x + 2, HIGH);
-  digitalWrite(y + 10, LOW);
-  delay(1);
+  digitalWrite(y + 14, LOW);
+  delay(2);
 }
